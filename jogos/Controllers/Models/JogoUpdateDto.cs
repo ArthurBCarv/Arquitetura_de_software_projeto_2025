@@ -2,10 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace jogos.Models;
 
-public class Jogo
+public class JogoUpdateDto
 {
-    public int Id { get; set; }
-    
     [Required(ErrorMessage = "O título do jogo é obrigatório")]
     [StringLength(100, ErrorMessage = "O título deve ter no máximo 100 caracteres")]
     public string Titulo { get; set; } = string.Empty;
@@ -21,5 +19,4 @@ public class Jogo
     public string Desenvolvedor { get; set; } = string.Empty;
 
     public DateTime DataLancamento { get; set; }
-    public bool Ativo { get; set; } = true;
 }
