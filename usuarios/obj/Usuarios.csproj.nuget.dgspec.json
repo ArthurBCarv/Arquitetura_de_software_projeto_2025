@@ -1,36 +1,39 @@
 {
   "format": 1,
   "restore": {
-    "L:\\Documentos\\GitHub\\Vitor_Arq_Software\\usuarios\\Usuarios.csproj": {}
+    "C:\\Users\\desen\\Documents\\GitHub\\Arquitetura_de_software_projeto_2025\\usuarios\\Usuarios.csproj": {}
   },
   "projects": {
-    "L:\\Documentos\\GitHub\\Vitor_Arq_Software\\usuarios\\Usuarios.csproj": {
+    "C:\\Users\\desen\\Documents\\GitHub\\Arquitetura_de_software_projeto_2025\\usuarios\\Usuarios.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "L:\\Documentos\\GitHub\\Vitor_Arq_Software\\usuarios\\Usuarios.csproj",
+        "projectUniqueName": "C:\\Users\\desen\\Documents\\GitHub\\Arquitetura_de_software_projeto_2025\\usuarios\\Usuarios.csproj",
         "projectName": "Usuarios",
-        "projectPath": "L:\\Documentos\\GitHub\\Vitor_Arq_Software\\usuarios\\Usuarios.csproj",
-        "packagesPath": "C:\\Users\\luiza\\.nuget\\packages\\",
-        "outputPath": "L:\\Documentos\\GitHub\\Vitor_Arq_Software\\usuarios\\obj\\",
+        "projectPath": "C:\\Users\\desen\\Documents\\GitHub\\Arquitetura_de_software_projeto_2025\\usuarios\\Usuarios.csproj",
+        "packagesPath": "C:\\Users\\desen\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\desen\\Documents\\GitHub\\Arquitetura_de_software_projeto_2025\\usuarios\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
+          "C:\\Program Files (x86)\\DevExpress 20.2\\Components\\Offline Packages",
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\luiza\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\desen\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 20.2.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net10.0"
+          "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages": {},
+          "C:\\Program Files (x86)\\DevExpress 20.2\\Components\\System\\Components\\Packages": {},
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net10.0": {
-            "targetAlias": "net10.0",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {}
           }
         },
@@ -42,35 +45,35 @@
         "restoreAuditProperties": {
           "enableAudit": "true",
           "auditLevel": "low",
-          "auditMode": "all"
+          "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net10.0": {
-          "targetAlias": "net10.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
-              "version": "[10.0.0, )"
+              "version": "[8.0.0, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[10.0.0, )"
+              "version": "[8.0.0, )"
             },
             "Microsoft.EntityFrameworkCore.Sqlite": {
               "target": "Package",
-              "version": "[10.0.0, )"
+              "version": "[8.0.0, )"
             },
             "Microsoft.EntityFrameworkCore.Tools": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.0, )"
+              "version": "[8.0.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
-              "version": "[10.0.1, )"
+              "version": "[6.5.0, )"
             }
           },
           "imports": [
@@ -92,7 +95,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Users\\luiza\\.dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

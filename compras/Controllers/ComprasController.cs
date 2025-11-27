@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Compras.Data;
 using Compras.Dtos;
 using Compras.Models;
-using Compras.Services;
+using System.Text.Json;
 
 namespace Compras.Controllers
 {
@@ -12,74 +12,59 @@ namespace Compras.Controllers
     public class ComprasController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly JogosService _jogosService;
-        private readonly UsuariosService _usuariosService;
+        private readonly HttpClient _httpClient;
 
-        public ComprasController(
-            AppDbContext context, 
-            JogosService jogosService,
-            UsuariosService usuariosService)
+        public ComprasController(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
-            _jogosService = jogosService;
-            _usuariosService = usuariosService;
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<CompraDto>> Create(CompraCreateDto dto)
-        {
-            var usuario = await _usuariosService.GetUsuarioByIdAsync(dto.UsuarioId);
-            if (usuario == null)
-                return BadRequest("Usuário não encontrado.");
-
-            if (!usuario.Ativo)
-                return BadRequest("Usuário inativo.");
-
-            var jogo = await _jogosService.GetJogoByIdAsync(dto.JogoId);
-            if (jogo == null)
-                return BadRequest("Jogo não encontrado.");
-
-            if (!jogo.Ativo)
-                return BadRequest("Jogo não disponível para compra.");
-
-            var jaComprou = await _context.Compras
-                .AnyAsync(c => c.UsuarioId == dto.UsuarioId && c.JogoId == dto.JogoId);
-            
-            if (jaComprou)
-                return BadRequest("Usuário já possui este jogo.");
-
-            var compra = new Compra
-            {
-                UsuarioId = dto.UsuarioId,
-                JogoId = dto.JogoId,
-                PrecoCompra = jogo.Preco,
-                DataCompra = DateTime.UtcNow,
-                Status = "Concluida"
-            };
-
-            _context.Compras.Add(compra);
-            await _context.SaveChangesAsync();
-
-            await _usuariosService.AdicionarJogoBibliotecaAsync(dto.UsuarioId, dto.JogoId);
-
-            var compraDto = await MapToDtoAsync(compra);
-            return CreatedAtAction(nameof(GetById), new { id = compra.Id }, compraDto);
+            _httpClient = httpClientFactory.CreateClient();
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CompraDto>>> GetAll([FromQuery] int? usuarioId = null)
+        public async Task<ActionResult<IEnumerable<CompraDto>>> GetAll()
         {
-            var query = _context.Compras.AsQueryable();
-
-            if (usuarioId.HasValue)
-                query = query.Where(c => c.UsuarioId == usuarioId.Value);
-
-            var compras = await query.OrderByDescending(c => c.DataCompra).ToListAsync();
-            
+            var compras = await _context.Compras.ToListAsync();
             var comprasDto = new List<CompraDto>();
+
             foreach (var compra in compras)
             {
-                comprasDto.Add(await MapToDtoAsync(compra));
+                var compraDto = new CompraDto
+                {
+                    Id = compra.Id,
+                    UsuarioId = compra.UsuarioId,
+                    JogoId = compra.JogoId,
+                    ValorPago = compra.ValorPago,
+                    DataCompra = compra.DataCompra,
+                    Status = compra.Status
+                };
+
+                try
+                {
+                    var usuarioResponse = await _httpClient.GetAsync($"http://localhost:5000/api/usuarios/{compra.UsuarioId}");
+                    if (usuarioResponse.IsSuccessStatusCode)
+                    {
+                        var usuarioJson = await usuarioResponse.Content.ReadAsStringAsync();
+                        var usuario = JsonSerializer.Deserialize<UsuarioInfoDto>(usuarioJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (usuario != null)
+                            compraDto.UsuarioNome = usuario.Nome;
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var jogoResponse = await _httpClient.GetAsync($"http://localhost:5001/api/jogos/{compra.JogoId}");
+                    if (jogoResponse.IsSuccessStatusCode)
+                    {
+                        var jogoJson = await jogoResponse.Content.ReadAsStringAsync();
+                        var jogo = JsonSerializer.Deserialize<JogoInfoDto>(jogoJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (jogo != null)
+                            compraDto.JogoTitulo = jogo.Titulo;
+                    }
+                }
+                catch { }
+
+                comprasDto.Add(compraDto);
             }
 
             return Ok(comprasDto);
@@ -92,7 +77,42 @@ namespace Compras.Controllers
             if (compra == null)
                 return NotFound();
 
-            var compraDto = await MapToDtoAsync(compra);
+            var compraDto = new CompraDto
+            {
+                Id = compra.Id,
+                UsuarioId = compra.UsuarioId,
+                JogoId = compra.JogoId,
+                ValorPago = compra.ValorPago,
+                DataCompra = compra.DataCompra,
+                Status = compra.Status
+            };
+
+            try
+            {
+                var usuarioResponse = await _httpClient.GetAsync($"http://localhost:5000/api/usuarios/{compra.UsuarioId}");
+                if (usuarioResponse.IsSuccessStatusCode)
+                {
+                    var usuarioJson = await usuarioResponse.Content.ReadAsStringAsync();
+                    var usuario = JsonSerializer.Deserialize<UsuarioInfoDto>(usuarioJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (usuario != null)
+                        compraDto.UsuarioNome = usuario.Nome;
+                }
+            }
+            catch { }
+
+            try
+            {
+                var jogoResponse = await _httpClient.GetAsync($"http://localhost:5001/api/jogos/{compra.JogoId}");
+                if (jogoResponse.IsSuccessStatusCode)
+                {
+                    var jogoJson = await jogoResponse.Content.ReadAsStringAsync();
+                    var jogo = JsonSerializer.Deserialize<JogoInfoDto>(jogoJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (jogo != null)
+                        compraDto.JogoTitulo = jogo.Titulo;
+                }
+            }
+            catch { }
+
             return Ok(compraDto);
         }
 
@@ -101,51 +121,130 @@ namespace Compras.Controllers
         {
             var compras = await _context.Compras
                 .Where(c => c.UsuarioId == usuarioId)
-                .OrderByDescending(c => c.DataCompra)
                 .ToListAsync();
 
             var comprasDto = new List<CompraDto>();
+
             foreach (var compra in compras)
             {
-                comprasDto.Add(await MapToDtoAsync(compra));
+                var compraDto = new CompraDto
+                {
+                    Id = compra.Id,
+                    UsuarioId = compra.UsuarioId,
+                    JogoId = compra.JogoId,
+                    ValorPago = compra.ValorPago,
+                    DataCompra = compra.DataCompra,
+                    Status = compra.Status
+                };
+
+                try
+                {
+                    var jogoResponse = await _httpClient.GetAsync($"http://localhost:5001/api/jogos/{compra.JogoId}");
+                    if (jogoResponse.IsSuccessStatusCode)
+                    {
+                        var jogoJson = await jogoResponse.Content.ReadAsStringAsync();
+                        var jogo = JsonSerializer.Deserialize<JogoInfoDto>(jogoJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (jogo != null)
+                            compraDto.JogoTitulo = jogo.Titulo;
+                    }
+                }
+                catch { }
+
+                comprasDto.Add(compraDto);
             }
 
             return Ok(comprasDto);
         }
 
-        private async Task<CompraDto> MapToDtoAsync(Compra compra)
+        [HttpPost]
+        public async Task<ActionResult<CompraDto>> Create(CompraCreateDto dto)
         {
-            var dto = new CompraDto
+            try
+            {
+                var usuarioResponse = await _httpClient.GetAsync($"http://localhost:5000/api/usuarios/{dto.UsuarioId}");
+                if (!usuarioResponse.IsSuccessStatusCode)
+                    return BadRequest("Usuário não encontrado.");
+            }
+            catch
+            {
+                return BadRequest("Erro ao buscar usuário.");
+            }
+
+            JogoInfoDto? jogo = null;
+            try
+            {
+                var jogoResponse = await _httpClient.GetAsync($"http://localhost:5001/api/jogos/{dto.JogoId}");
+                if (!jogoResponse.IsSuccessStatusCode)
+                    return BadRequest("Jogo não encontrado.");
+
+                var jogoJson = await jogoResponse.Content.ReadAsStringAsync();
+                jogo = JsonSerializer.Deserialize<JogoInfoDto>(jogoJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (jogo == null || !jogo.Disponivel)
+                    return BadRequest("Jogo não disponível para compra.");
+            }
+            catch
+            {
+                return BadRequest("Erro ao buscar jogo.");
+            }
+
+            var compraExistente = await _context.Compras
+                .AnyAsync(c => c.UsuarioId == dto.UsuarioId && c.JogoId == dto.JogoId);
+
+            if (compraExistente)
+                return BadRequest("Usuário já possui este jogo.");
+
+            var compra = new Compra
+            {
+                UsuarioId = dto.UsuarioId,
+                JogoId = dto.JogoId,
+                ValorPago = jogo.Preco,
+                DataCompra = DateTime.UtcNow,
+                Status = "Concluída"
+            };
+
+            _context.Compras.Add(compra);
+            await _context.SaveChangesAsync();
+
+            try
+            {
+                var usuarioResponse = await _httpClient.GetAsync($"http://localhost:5000/api/usuarios/{dto.UsuarioId}");
+                if (usuarioResponse.IsSuccessStatusCode)
+                {
+                    var usuarioJson = await usuarioResponse.Content.ReadAsStringAsync();
+                    var usuario = JsonSerializer.Deserialize<UsuarioInfoDto>(usuarioJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (usuario != null)
+                    {
+                        if (!usuario.BibliotecaJogos.Contains(dto.JogoId))
+                        {
+                            usuario.BibliotecaJogos.Add(dto.JogoId);
+
+                            var updateContent = new StringContent(
+                                JsonSerializer.Serialize(new { bibliotecaJogos = usuario.BibliotecaJogos }),
+                                System.Text.Encoding.UTF8,
+                                "application/json"
+                            );
+
+                            await _httpClient.PutAsync($"http://localhost:5000/api/usuarios/{dto.UsuarioId}/biblioteca", updateContent);
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            var compraDto = new CompraDto
             {
                 Id = compra.Id,
                 UsuarioId = compra.UsuarioId,
                 JogoId = compra.JogoId,
-                PrecoCompra = compra.PrecoCompra,
+                JogoTitulo = jogo.Titulo,
+                ValorPago = compra.ValorPago,
                 DataCompra = compra.DataCompra,
                 Status = compra.Status
             };
 
-            var jogo = await _jogosService.GetJogoByIdAsync(compra.JogoId);
-            if (jogo != null)
-            {
-                dto.JogoInfo = new JogoInfoDto
-                {
-                    Titulo = jogo.Titulo,
-                    Desenvolvedor = jogo.Desenvolvedor
-                };
-            }
-
-            var usuario = await _usuariosService.GetUsuarioByIdAsync(compra.UsuarioId);
-            if (usuario != null)
-            {
-                dto.UsuarioInfo = new UsuarioInfoDto
-                {
-                    Nome = usuario.Nome,
-                    Email = usuario.Email
-                };
-            }
-
-            return dto;
+            return CreatedAtAction(nameof(GetById), new { id = compra.Id }, compraDto);
         }
     }
 }

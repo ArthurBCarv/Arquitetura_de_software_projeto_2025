@@ -43,7 +43,8 @@ namespace Usuarios.Controllers
                 SenhaHash = GerarHashSenha(dto.Senha),
                 Pontos = 0,
                 DataCriacao = DateTime.UtcNow,
-                Ativo = true
+                Ativo = true,
+                BibliotecaJogos = new List<int>()
             };
 
             _context.Usuarios.Add(usuario);
@@ -107,7 +108,8 @@ namespace Usuarios.Controllers
                 Email = usuario.Email,
                 Pontos = usuario.Pontos,
                 Ativo = usuario.Ativo,
-                DataCriacao = usuario.DataCriacao
+                DataCriacao = usuario.DataCriacao,
+                BibliotecaJogos = usuario.BibliotecaJogos
             };
 
             return Ok(perfil);
@@ -138,6 +140,19 @@ namespace Usuarios.Controllers
                 usuario.BibliotecaJogos.Add(dto.JogoId);
                 await _context.SaveChangesAsync();
             }
+
+            return NoContent();
+        }
+
+        [HttpPut("{id:int}/biblioteca")]
+        public async Task<ActionResult> UpdateBiblioteca(int id, [FromBody] BibliotecaUpdateDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+                return NotFound();
+
+            usuario.BibliotecaJogos = dto.BibliotecaJogos;
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }

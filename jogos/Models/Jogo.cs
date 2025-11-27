@@ -8,7 +8,7 @@ namespace Jogos.Models
         public decimal Preco { get; set; }
         public string Desenvolvedor { get; set; } = "";
         public DateTime DataLancamento { get; set; }
-        public bool Ativo { get; set; } = true;
+        public bool Disponivel { get; set; } = true;
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
     }
 }

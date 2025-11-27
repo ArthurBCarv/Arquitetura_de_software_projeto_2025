@@ -1,0 +1,55 @@
+@baseUrl = http://localhost:5001/api
+
+### Listar todos os jogos
+GET {{baseUrl}}/jogos
+
+### Buscar jogo por ID
+GET {{baseUrl}}/jogos/1
+
+### Criar novo jogo
+POST {{baseUrl}}/jogos
+Content-Type: application/json
+
+{
+  "titulo": "Celeste",
+  "descricao": "Um jogo de plataforma desafiador sobre escalar uma montanha",
+  "preco": 19.99,
+  "desenvolvedor": "Maddy Makes Games",
+  "dataLancamento": "2018-01-25"
+}
+
+### Criar outro jogo
+POST {{baseUrl}}/jogos
+Content-Type: application/json
+
+{
+  "titulo": "Hollow Knight",
+  "descricao": "Aventura de ação em um reino de insetos esquecido",
+  "preco": 14.99,
+  "desenvolvedor": "Team Cherry",
+  "dataLancamento": "2017-02-24"
+}
+
+### Criar mais um jogo
+POST {{baseUrl}}/jogos
+Content-Type: application/json
+
+{
+  "titulo": "Stardew Valley",
+  "descricao": "Simulador de fazenda com RPG elements",
+  "preco": 14.99,
+  "desenvolvedor": "ConcernedApe",
+  "dataLancamento": "2016-02-26"
+}
+
+### Atualizar jogo
+PUT {{baseUrl}}/jogos/1
+Content-Type: application/json
+
+{
+  "preco": 24.99,
+  "disponivel": true
+}
+
+### Desativar jogo (soft delete)
+DELETE {{baseUrl}}/jogos/1

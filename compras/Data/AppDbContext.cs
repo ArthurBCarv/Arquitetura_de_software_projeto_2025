@@ -5,24 +5,17 @@ namespace Compras.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-        }
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Compra> Compras { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Compra>().ToTable("Compras");
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Compra>()
-                .Property(c => c.PrecoCompra)
-                .HasPrecision(10, 2);
-            
-            modelBuilder.Entity<Compra>()
-                .HasIndex(c => c.UsuarioId);
-            
-            modelBuilder.Entity<Compra>()
-                .HasIndex(c => c.JogoId);
+                .Property(c => c.ValorPago)
+                .HasColumnType("decimal(18,2)");
         }
     }
 }

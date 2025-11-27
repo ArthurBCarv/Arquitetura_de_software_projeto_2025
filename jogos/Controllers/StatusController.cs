@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using jogos.Data;
+using Jogos.Data;
 
 namespace jogos.Controllers;
 

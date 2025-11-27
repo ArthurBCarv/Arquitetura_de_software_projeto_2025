@@ -1,0 +1,28 @@
+@baseUrl = http://localhost:5002/api
+
+### Listar todas as compras
+GET {{baseUrl}}/compras
+
+### Buscar compra por ID
+GET {{baseUrl}}/compras/1
+
+### Buscar compras de um usuário
+GET {{baseUrl}}/compras/usuario/1
+
+### Registrar nova compra
+POST {{baseUrl}}/compras
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "jogoId": 1
+}
+
+### Registrar outra compra
+POST {{baseUrl}}/compras
+Content-Type: application/json
+
+{
+  "usuarioId": 1,
+  "jogoId": 2
+}

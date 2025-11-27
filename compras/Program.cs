@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Compras.Data;
-using Compras.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,8 +8,7 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddHttpClient<JogosService>();
-builder.Services.AddHttpClient<UsuariosService>();
+builder.Services.AddHttpClient();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
