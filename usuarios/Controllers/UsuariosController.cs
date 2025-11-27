@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -56,7 +56,8 @@ namespace Usuarios.Controllers
                 Email = usuario.Email,
                 Pontos = usuario.Pontos,
                 Ativo = usuario.Ativo,
-                DataCriacao = usuario.DataCriacao
+                DataCriacao = usuario.DataCriacao,
+                BibliotecaJogos = usuario.BibliotecaJogos
             };
 
             return CreatedAtAction(nameof(GetById), new { id = usuario.Id }, perfil);
@@ -85,7 +86,8 @@ namespace Usuarios.Controllers
                 Email = usuario.Email,
                 Pontos = usuario.Pontos,
                 Ativo = usuario.Ativo,
-                DataCriacao = usuario.DataCriacao
+                DataCriacao = usuario.DataCriacao,
+                BibliotecaJogos = usuario.BibliotecaJogos
             };
 
             return Ok(perfil);
@@ -122,6 +124,32 @@ namespace Usuarios.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpPost("{id:int}/biblioteca")]
+        public async Task<IActionResult> AdicionarJogoBiblioteca(int id, AdicionarJogoBibliotecaDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+                return NotFound();
+
+            if (!usuario.BibliotecaJogos.Contains(dto.JogoId))
+            {
+                usuario.BibliotecaJogos.Add(dto.JogoId);
+                await _context.SaveChangesAsync();
+            }
+
+            return NoContent();
+        }
+
+        [HttpGet("{id:int}/biblioteca")]
+        public async Task<ActionResult<List<int>>> GetBiblioteca(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+                return NotFound();
+
+            return Ok(usuario.BibliotecaJogos);
         }
     }
 }

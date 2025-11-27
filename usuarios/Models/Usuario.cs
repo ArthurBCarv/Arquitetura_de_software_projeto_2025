@@ -1,4 +1,4 @@
-﻿namespace Usuarios.Models
+namespace Usuarios.Models
 {
     public class Usuario
     {
@@ -9,5 +9,6 @@
         public int Pontos { get; set; }
         public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
         public bool Ativo { get; set; } = true;
+        public List<int> BibliotecaJogos { get; set; } = new List<int>();
     }
 }

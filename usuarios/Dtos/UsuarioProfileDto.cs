@@ -1,4 +1,4 @@
-﻿namespace Usuarios.Dtos
+namespace Usuarios.Dtos
 {
     public class UsuarioProfileDto
     {
@@ -8,5 +8,6 @@
         public int Pontos { get; set; }
         public bool Ativo { get; set; }
         public DateTime DataCriacao { get; set; }
+        public List<int> BibliotecaJogos { get; set; } = new List<int>();
     }
 }

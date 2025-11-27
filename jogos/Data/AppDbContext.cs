@@ -1,16 +1,22 @@
 using Microsoft.EntityFrameworkCore;
-using jogos.Models;
+using Jogos.Models;
 
-namespace jogos.Data;
-
-public class AppDbContext : DbContext
+namespace Jogos.Data
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
-    public DbSet<Jogo> Jogos { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public class AppDbContext : DbContext
     {
-        modelBuilder.Entity<Jogo>().ToTable("Jogos");
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+
+        public DbSet<Jogo> Jogos { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Jogo>().ToTable("Jogos");
+            modelBuilder.Entity<Jogo>()
+                .Property(j => j.Preco)
+                .HasPrecision(10, 2);
+        }
     }
 }

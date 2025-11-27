@@ -1,137 +1,130 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using jogos.Data;
-using jogos.Models;
+using Jogos.Data;
+using Jogos.Dtos;
+using Jogos.Models;
 
-namespace jogos.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class JogosController : ControllerBase
+namespace Jogos.Controllers
 {
-    private readonly AppDbContext _context;
-    private readonly ILogger<JogosController> _logger;
-
-    public JogosController(AppDbContext context, ILogger<JogosController> logger)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class JogosController : ControllerBase
     {
-        _context = context;
-        _logger = logger;
-    }
+        private readonly AppDbContext _context;
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Jogo>>> GetJogos()
-    {
-        _logger.LogInformation("Buscando todos os jogos ativos");
-        return await _context.Jogos.Where(j => j.Ativo).ToListAsync();
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Jogo>> GetJogo(int id)
-    {
-        _logger.LogInformation("Buscando jogo com ID: {JogoId}", id);
-        
-        var jogo = await _context.Jogos.FindAsync(id);
-
-        if (jogo == null || !jogo.Ativo)
+        public JogosController(AppDbContext context)
         {
-            _logger.LogWarning("Jogo com ID {JogoId} não encontrado", id);
-            return NotFound(new { message = "Jogo não encontrado" });
+            _context = context;
         }
 
-        return jogo;
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<Jogo>> PostJogo(JogoCreateDto jogoDto)
-    {
-        if (!ModelState.IsValid)
+        [HttpPost]
+        public async Task<ActionResult<JogoDto>> Create(JogoCreateDto dto)
         {
-            _logger.LogWarning("Tentativa de criar jogo com dados inválidos");
-            return BadRequest(ModelState);
-        }
+            var jogo = new Jogo
+            {
+                Titulo = dto.Titulo.Trim(),
+                Descricao = dto.Descricao.Trim(),
+                Preco = dto.Preco,
+                Desenvolvedor = dto.Desenvolvedor.Trim(),
+                DataLancamento = dto.DataLancamento,
+                Ativo = true,
+                DataCriacao = DateTime.UtcNow
+            };
 
-        var jogo = new Jogo
-        {
-            Titulo = jogoDto.Titulo,
-            Descricao = jogoDto.Descricao,
-            Preco = jogoDto.Preco,
-            Desenvolvedor = jogoDto.Desenvolvedor,
-            DataLancamento = jogoDto.DataLancamento,
-            Ativo = true
-        };
-
-        _context.Jogos.Add(jogo);
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Jogo criado com ID: {JogoId}", jogo.Id);
-        return CreatedAtAction(nameof(GetJogo), new { id = jogo.Id }, jogo);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutJogo(int id, JogoUpdateDto jogoDto)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        if (id <= 0)
-        {
-            return BadRequest(new { message = "ID do jogo inválido" });
-        }
-
-        var jogoExistente = await _context.Jogos.FindAsync(id);
-        if (jogoExistente == null || !jogoExistente.Ativo)
-        {
-            return NotFound(new { message = "Jogo não encontrado" });
-        }
-
-        // Atualiza apenas os campos permitidos
-        jogoExistente.Titulo = jogoDto.Titulo;
-        jogoExistente.Descricao = jogoDto.Descricao;
-        jogoExistente.Preco = jogoDto.Preco;
-        jogoExistente.Desenvolvedor = jogoDto.Desenvolvedor;
-        jogoExistente.DataLancamento = jogoDto.DataLancamento;
-
-        try
-        {
+            _context.Jogos.Add(jogo);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Jogo com ID {JogoId} atualizado com sucesso", id);
+
+            var jogoDto = MapToDto(jogo);
+            return CreatedAtAction(nameof(GetById), new { id = jogo.Id }, jogoDto);
         }
-        catch (DbUpdateConcurrencyException)
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<JogoDto>>> GetAll([FromQuery] bool? ativo = null)
         {
-            if (!JogoExists(id))
-            {
+            var query = _context.Jogos.AsQueryable();
+
+            if (ativo.HasValue)
+                query = query.Where(j => j.Ativo == ativo.Value);
+
+            var jogos = await query.OrderByDescending(j => j.DataCriacao).ToListAsync();
+            return Ok(jogos.Select(MapToDto));
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<JogoDto>> GetById(int id)
+        {
+            var jogo = await _context.Jogos.FindAsync(id);
+            if (jogo == null)
                 return NotFound();
-            }
-            else
-            {
-                throw;
-            }
+
+            return Ok(MapToDto(jogo));
         }
 
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteJogo(int id)
-    {
-        var jogo = await _context.Jogos.FindAsync(id);
-        if (jogo == null)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, JogoUpdateDto dto)
         {
-            _logger.LogWarning("Tentativa de excluir jogo inexistente com ID: {JogoId}", id);
-            return NotFound(new { message = "Jogo não encontrado" });
+            var jogo = await _context.Jogos.FindAsync(id);
+            if (jogo == null)
+                return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(dto.Titulo))
+                jogo.Titulo = dto.Titulo.Trim();
+            
+            if (!string.IsNullOrWhiteSpace(dto.Descricao))
+                jogo.Descricao = dto.Descricao.Trim();
+            
+            if (dto.Preco.HasValue)
+                jogo.Preco = dto.Preco.Value;
+            
+            if (!string.IsNullOrWhiteSpace(dto.Desenvolvedor))
+                jogo.Desenvolvedor = dto.Desenvolvedor.Trim();
+            
+            if (dto.DataLancamento.HasValue)
+                jogo.DataLancamento = dto.DataLancamento.Value;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
 
-        jogo.Ativo = false;
-        await _context.SaveChangesAsync();
+        [HttpPut("{id:int}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, JogoUpdateStatusDto dto)
+        {
+            var jogo = await _context.Jogos.FindAsync(id);
+            if (jogo == null)
+                return NotFound();
 
-        _logger.LogInformation("Jogo com ID {JogoId} desativado com sucesso", id);
-        return NoContent();
-    }
+            jogo.Ativo = dto.Ativo;
+            await _context.SaveChangesAsync();
 
-    private bool JogoExists(int id)
-    {
-        return _context.Jogos.Any(e => e.Id == id && e.Ativo);
+            return NoContent();
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var jogo = await _context.Jogos.FindAsync(id);
+            if (jogo == null)
+                return NotFound();
+
+            _context.Jogos.Remove(jogo);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private static JogoDto MapToDto(Jogo jogo)
+        {
+            return new JogoDto
+            {
+                Id = jogo.Id,
+                Titulo = jogo.Titulo,
+                Descricao = jogo.Descricao,
+                Preco = jogo.Preco,
+                Desenvolvedor = jogo.Desenvolvedor,
+                DataLancamento = jogo.DataLancamento,
+                Ativo = jogo.Ativo,
+                DataCriacao = jogo.DataCriacao
+            };
+        }
     }
 }
